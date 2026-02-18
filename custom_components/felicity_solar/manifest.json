@@ -1,7 +1,7 @@
 {
   "domain": "felicity_solar",
   "name": "Felicity Solar",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "documentation": "https://github.com/matheustavarestrindade/felicity_solar_hacs",
   "issue_tracker": "https://github.com/matheustavarestrindade/felicity_solar_hacs/issues",
   "dependencies": [],
