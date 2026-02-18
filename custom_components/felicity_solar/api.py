@@ -3,6 +3,7 @@ import re
 import json
 import base64
 import os
+import asyncio
 from urllib.parse import urljoin
 from datetime import datetime
 from enum import Enum
@@ -86,40 +87,38 @@ class FelicitySolarAPI:
             return False
         return self.token_expiration > datetime.now()
 
-    async def _load_from_file(self) -> None:
+    def _read_token_file_sync(self):
         if not os.path.exists(self.JSON_FILE_PATH):
-            return
-
+            return None
         try:
             with open(self.JSON_FILE_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            if not data:
-                return
-
-            found = next(
-                (item for item in data if item["email"] == self.email), None)
-            if not found:
-                return
-
-            self.bearer_token = found["bearer"]
-            _LOGGER.info("Loaded bearer token from file")
+                return json.load(f)
         except Exception:
-            _LOGGER.error("Failed to parse felicitySolarToken.json")
+            return None
+
+    def _write_token_file_sync(self, data):
+        os.makedirs(os.path.dirname(self.JSON_FILE_PATH) or ".", exist_ok=True)
+        with open(self.JSON_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
+    async def _load_from_file(self) -> None:
+        data = await asyncio.to_thread(self._read_token_file_sync)
+        if not data:
+            return
+
+        found = next(
+            (item for item in data if item["email"] == self.email), None)
+        if not found:
+            return
+
+        self.bearer_token = found["bearer"]
+        _LOGGER.info("Loaded bearer token from file")
 
     async def _save_to_file(self) -> None:
         if not self.bearer_token or not self.token_expiration:
             return
 
-        data = []
-        if os.path.exists(self.JSON_FILE_PATH):
-            try:
-                with open(self.JSON_FILE_PATH, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-            except Exception:
-                pass
-
-        os.makedirs(os.path.dirname(self.JSON_FILE_PATH) or ".", exist_ok=True)
+        data = await asyncio.to_thread(self._read_token_file_sync) or []
 
         found = next(
             (item for item in data if item["email"] == self.email), None)
@@ -138,8 +137,7 @@ class FelicitySolarAPI:
             }
             data.append(new_entry)
 
-        with open(self.JSON_FILE_PATH, "w", encoding="utf-8") as f:
-            json.dump(data, f)
+        await asyncio.to_thread(self._write_token_file_sync, data)
 
     async def _load_devices_serial_numbers(self) -> None:
         headers = {
