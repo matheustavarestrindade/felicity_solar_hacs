@@ -10,6 +10,7 @@ _LOGGER = logging.getLogger(__name__)
 # Tell HA which platforms we support (only sensors for now)
 PLATFORMS = ["sensor"]
 
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Felicity Solar from a config entry."""
     hass.data.setdefault(DOMAIN, {})
@@ -17,7 +18,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Extract the data saved by config_flow.py
     email = entry.data[CONF_EMAIL]
     password = entry.data[CONF_PASSWORD]
-    update_interval = entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
+    update_interval = entry.data.get(
+        CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
 
     # Boot up the background worker
     coordinator = FelicitySolarCoordinator(
@@ -36,6 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Forward setup to sensor.py
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry (e.g. if the user clicks Delete)."""
