@@ -2,6 +2,8 @@ import logging
 import re
 import json
 import base64
+import os
+from urllib.parse import urljoin
 from datetime import datetime
 from enum import Enum
 import jwt
@@ -18,6 +20,7 @@ class DeviceTypeEnum(str, Enum):
 
 
 class FelicitySolarAPI:
+    JSON_FILE_PATH = "data/felicitySolarToken.json"
     LOGIN_URL = "https://shine.felicitysolar.com/login"
     API_URL_DEVICE_LIST = "https://shine-api.felicitysolar.com/device/list_device_all_type"
     API_URL_DEVICE_SNAPSHOT = "https://shine-api.felicitysolar.com/device/get_device_snapshot"
@@ -33,6 +36,8 @@ class FelicitySolarAPI:
         self.devices_serial_numbers: list[str] = []
 
     async def initialize(self) -> None:
+        await self._load_from_file()
+
         if not self._is_logged_in():
             await self._login()
         await self._load_devices_serial_numbers()
@@ -81,6 +86,61 @@ class FelicitySolarAPI:
             return False
         return self.token_expiration > datetime.now()
 
+    async def _load_from_file(self) -> None:
+        if not os.path.exists(self.JSON_FILE_PATH):
+            return
+
+        try:
+            with open(self.JSON_FILE_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            if not data:
+                return
+
+            found = next(
+                (item for item in data if item["email"] == self.email), None)
+            if not found:
+                return
+
+            self.bearer_token = found["bearer"]
+            _LOGGER.info("Loaded bearer token from file")
+        except Exception:
+            _LOGGER.error("Failed to parse felicitySolarToken.json")
+
+    async def _save_to_file(self) -> None:
+        if not self.bearer_token or not self.token_expiration:
+            return
+
+        data = []
+        if os.path.exists(self.JSON_FILE_PATH):
+            try:
+                with open(self.JSON_FILE_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception:
+                pass
+
+        os.makedirs(os.path.dirname(self.JSON_FILE_PATH) or ".", exist_ok=True)
+
+        found = next(
+            (item for item in data if item["email"] == self.email), None)
+        exp_timestamp = int(self.token_expiration.timestamp() * 1000)
+
+        if found and found.get("exp", 0) > int(datetime.now().timestamp() * 1000):
+            return
+        elif found:
+            found["bearer"] = self.bearer_token
+            found["exp"] = exp_timestamp
+        else:
+            new_entry = {
+                "email": self.email,
+                "bearer": self.bearer_token,
+                "exp": exp_timestamp
+            }
+            data.append(new_entry)
+
+        with open(self.JSON_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
     async def _load_devices_serial_numbers(self) -> None:
         headers = {
             "accept": "application/json, text/plain, */*",
@@ -123,7 +183,6 @@ class FelicitySolarAPI:
             if not bearer:
                 raise ValueError("Token missing from login response.")
 
-            # Remove 'Bearer_' prefix if it exists to decode
             clean_token = bearer.replace("Bearer_", "")
             try:
                 decrypted_token = jwt.decode(
@@ -134,6 +193,7 @@ class FelicitySolarAPI:
             self.token_expiration = datetime.fromtimestamp(
                 decrypted_token["exp"])
             self.bearer_token = bearer
+            await self._save_to_file()
 
     async def _generate_password_hash(self, password: str) -> str:
         public_key_str = await self._extract_public_key()
@@ -160,7 +220,7 @@ class FelicitySolarAPI:
         if match:
             index_url = match.group(1)
             try:
-                absolute_index_url = response.url.join(index_url)
+                absolute_index_url = urljoin(self.LOGIN_URL, index_url)
                 async with self.session.get(absolute_index_url) as index_res:
                     if index_res.status == 200:
                         index_text = await index_res.text()
@@ -179,8 +239,8 @@ class FelicitySolarAPI:
                 _LOGGER.error(f"Failed to fetch main index script: {err}")
 
         for src in script_urls:
+            absolute_url = urljoin(self.LOGIN_URL, src)
             try:
-                absolute_url = response.url.join(src)
                 async with self.session.get(absolute_url) as script_res:
                     if script_res.status == 200:
                         combined_text += "\n\n" + await script_res.text()
