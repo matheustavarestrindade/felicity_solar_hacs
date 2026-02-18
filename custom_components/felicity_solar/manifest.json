@@ -6,7 +6,7 @@
   "issue_tracker": "https://github.com/matheustavarestrindade/felicity_solar_hacs/issues",
   "dependencies": [],
   "codeowners": ["@matheustavarestrindade"],
-  "requirements": ["pycryptodome==3.18.0", "PyJWT==2.8.0"],
+  "requirements": ["pycryptodome==3.18.0", "PyJWT==2.10.1"],
   "iot_class": "cloud_polling",
   "config_flow": true
 }
