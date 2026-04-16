@@ -4,7 +4,6 @@ import json
 import base64
 import os
 import asyncio
-import ssl
 from urllib.parse import urljoin
 from datetime import datetime
 from enum import Enum
@@ -16,24 +15,16 @@ import aiohttp
 _LOGGER = logging.getLogger(__name__)
 
 
-def create_felicity_ssl_context() -> ssl.SSLContext:
-    """Create an SSL context that skips verification for Felicity Solar servers.
+def create_felicity_client_session(hass=None) -> aiohttp.ClientSession:
+    """Create an aiohttp ClientSession with SSL verification disabled.
 
     The Felicity Solar API servers (shine.felicitysolar.com, shine-api.felicitysolar.com)
     serve their leaf certificate without the intermediate CA, which causes
-    SSLCertVerificationError on most clients. We disable cert verification
-    only for requests to these hosts.
+    SSLCertVerificationError on most clients. We pass ssl=False to skip verification
+    only for requests made by this integration's session.
     """
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
-    _LOGGER.info("Created custom SSL context (certificate verification disabled for Felicity Solar hosts)")
-    return ssl_context
-
-
-def create_felicity_client_session(hass=None) -> aiohttp.ClientSession:
-    """Create an aiohttp ClientSession with custom SSL handling for Felicity Solar."""
-    connector = aiohttp.TCPConnector(ssl=create_felicity_ssl_context())
+    _LOGGER.info("Creating HTTP session with SSL verification disabled for Felicity Solar hosts")
+    connector = aiohttp.TCPConnector(ssl=False)
     return aiohttp.ClientSession(connector=connector)
 
 
