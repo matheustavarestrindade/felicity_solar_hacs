@@ -2,10 +2,9 @@ import logging
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import selector
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD
-from .api import FelicitySolarAPI
+from .api import FelicitySolarAPI, create_felicity_client_session
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,8 +31,8 @@ class FelicitySolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             password = user_input[CONF_PASSWORD]
 
             try:
-                # Grab the Home Assistant web session
-                session = async_get_clientsession(self.hass)
+                # Create a session with custom SSL handling for Felicity Solar
+                session = create_felicity_client_session(self.hass)
 
                 # Initialize the API to test credentials
                 api = FelicitySolarAPI(email, password, session)

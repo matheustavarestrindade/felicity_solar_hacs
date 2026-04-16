@@ -2,9 +2,8 @@ import logging
 from datetime import timedelta
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import FelicitySolarAPI, DeviceTypeEnum
+from .api import FelicitySolarAPI, DeviceTypeEnum, create_felicity_client_session
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,10 +35,11 @@ class FelicitySolarCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
             update_interval=timedelta(seconds=update_interval),
         )
+        self._session = create_felicity_client_session(hass)
         self.api = FelicitySolarAPI(
             email=email,
             password=password,
-            session=async_get_clientsession(hass)
+            session=self._session
         )
 
     async def _async_update_data(self) -> dict[str, dict]:

@@ -52,6 +52,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry (e.g. if the user clicks Delete)."""
     _LOGGER.info("Unloading Felicity Solar integration for %s", entry.data.get(CONF_EMAIL, "unknown"))
+
+    coordinator = hass.data[DOMAIN].get(entry.entry_id)
+    if coordinator and hasattr(coordinator, "_session"):
+        await coordinator._session.close()
+        _LOGGER.debug("Closed custom aiohttp session")
+
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)

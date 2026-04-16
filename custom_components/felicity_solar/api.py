@@ -4,15 +4,37 @@ import json
 import base64
 import os
 import asyncio
+import ssl
 from urllib.parse import urljoin
 from datetime import datetime
 from enum import Enum
 import jwt
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_v1_5
-from aiohttp import ClientSession
+import aiohttp
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def create_felicity_ssl_context() -> ssl.SSLContext:
+    """Create an SSL context that skips verification for Felicity Solar servers.
+
+    The Felicity Solar API servers (shine.felicitysolar.com, shine-api.felicitysolar.com)
+    serve their leaf certificate without the intermediate CA, which causes
+    SSLCertVerificationError on most clients. We disable cert verification
+    only for requests to these hosts.
+    """
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    _LOGGER.info("Created custom SSL context (certificate verification disabled for Felicity Solar hosts)")
+    return ssl_context
+
+
+def create_felicity_client_session(hass=None) -> aiohttp.ClientSession:
+    """Create an aiohttp ClientSession with custom SSL handling for Felicity Solar."""
+    connector = aiohttp.TCPConnector(ssl=create_felicity_ssl_context())
+    return aiohttp.ClientSession(connector=connector)
 
 
 class DeviceTypeEnum(str, Enum):
@@ -27,7 +49,7 @@ class FelicitySolarAPI:
     API_URL_DEVICE_SNAPSHOT = "https://shine-api.felicitysolar.com/device/get_device_snapshot"
     API_URL_USER_LOGIN = "https://shine-api.felicitysolar.com/userlogin"
 
-    def __init__(self, email: str, password: str, session: ClientSession):
+    def __init__(self, email: str, password: str, session: aiohttp.ClientSession):
         self.email = email
         self.password = password
         self.session = session
