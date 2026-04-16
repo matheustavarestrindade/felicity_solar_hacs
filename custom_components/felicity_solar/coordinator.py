@@ -45,12 +45,21 @@ class FelicitySolarCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> dict[str, dict]:
         """Fetch data from API for all devices."""
         try:
+            _LOGGER.info("Starting data update cycle")
+
             # Re-auth and load devices if needed
             await self.api.initialize()
 
             devices_data = {}
+            serial_numbers = self.api.get_devices_serial_numbers()
 
-            for device_sn in self.api.get_devices_serial_numbers():
+            if not serial_numbers:
+                _LOGGER.warning("No devices found — check your Felicity Solar account or credentials")
+                return devices_data
+
+            _LOGGER.info("Fetching snapshots for %d device(s)", len(serial_numbers))
+
+            for device_sn in serial_numbers:
                 try:
                     snapshot = await self.api.get_device_snapshot(device_sn)
                     device_type = snapshot.get("productTypeEnum")
@@ -99,12 +108,25 @@ class FelicitySolarCoordinator(DataUpdateCoordinator):
                                 "nameplateRatedPower": str(snapshot.get("nameplateRatedPower", "")),
                             }
                         }
+                    else:
+                        _LOGGER.warning(
+                            "Unknown device type '%s' for %s, skipping",
+                            device_type, device_sn
+                        )
+                        continue
+
+                    _LOGGER.debug("Data fetched successfully for %s (%s)", device_sn, device_type)
+
                 except Exception as err:
-                    _LOGGER.error(f"Failed to fetch snapshot for device {
-                                  device_sn}: {err}")
+                    _LOGGER.error("Failed to fetch snapshot for device %s: %s", device_sn, err)
                     continue
 
+            _LOGGER.info(
+                "Data update complete: %d device(s) with data out of %d",
+                len(devices_data), len(serial_numbers)
+            )
             return devices_data
 
         except Exception as err:
+            _LOGGER.error("Update failed: %s", err)
             raise UpdateFailed(f"Error communicating with API: {err}")
