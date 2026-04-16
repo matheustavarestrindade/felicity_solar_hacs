@@ -10,6 +10,22 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
+def _safe_float(value, default=0.0):
+    """Convert value to float, returning default if value is None or invalid."""
+    try:
+        return float(value) if value is not None else default
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_int(value, default=0):
+    """Convert value to int, returning default if value is None or invalid."""
+    try:
+        return int(value) if value is not None else default
+    except (ValueError, TypeError):
+        return default
+
+
 class FelicitySolarCoordinator(DataUpdateCoordinator):
     """Coordinator to fetch data from Felicity Solar."""
 
@@ -44,29 +60,29 @@ class FelicitySolarCoordinator(DataUpdateCoordinator):
                             "type": device_type,
                             "serialNumber": device_sn,
                             "data": {
-                                "acInputVoltage": float(snapshot.get("acRInVolt", 0)),
-                                "acInputFrequency": float(snapshot.get("acRInFreq", 0)),
-                                "acInputPower": float(snapshot.get("acRInPower", 0)),
-                                "acOutputVoltage": float(snapshot.get("acROutVolt", 0)),
-                                "acOutputCurrent": float(snapshot.get("acROutCurr", 0)),
-                                "acOutputFrequency": float(snapshot.get("acROutFreq", 0)),
-                                "acTotalOutputActivePower": float(snapshot.get("acTotalOutActPower", 0)),
-                                "loadPercentage": float(snapshot.get("loadPercent", 0)),
-                                "pvVoltage": float(snapshot.get("pvVolt", 0)),
-                                "pvInputCurrent": float(snapshot.get("pvInCurr", 0)),
-                                "pvPower": float(snapshot.get("pvPower", 0)),
-                                "pvTotalPower": float(snapshot.get("pvTotalPower", 0)),
-                                "batteryVoltage": float(snapshot.get("emsVoltage", 0)),
-                                "batteryCurrent": float(snapshot.get("emsCurrent", 0)),
-                                "batteryPower": float(snapshot.get("emsPower", 0)),
-                                "batterySoc": int(snapshot.get("emsSoc", 0)),
-                                "tempMax": float(snapshot.get("tempMax", 0)),
-                                "devTempMax": float(snapshot.get("devTempMax", 0)),
-                                "energyPvToday": float(snapshot.get("ePvToday", 0)),
-                                "energyPvTotal": float(snapshot.get("ePvTotal", 0)),
-                                "energyLoadToday": float(snapshot.get("eLoadToday", 0)),
-                                "energyLoadTotal": float(snapshot.get("eLoadTotal", 0)),
-                                "totalEnergy": float(snapshot.get("totalEnergy", 0)),
+                                "acInputVoltage": _safe_float(snapshot.get("acRInVolt")),
+                                "acInputFrequency": _safe_float(snapshot.get("acRInFreq")),
+                                "acInputPower": _safe_float(snapshot.get("acRInPower")),
+                                "acOutputVoltage": _safe_float(snapshot.get("acROutVolt")),
+                                "acOutputCurrent": _safe_float(snapshot.get("acROutCurr")),
+                                "acOutputFrequency": _safe_float(snapshot.get("acROutFreq")),
+                                "acTotalOutputActivePower": _safe_float(snapshot.get("acTotalOutActPower")),
+                                "loadPercentage": _safe_float(snapshot.get("loadPercent")),
+                                "pvVoltage": _safe_float(snapshot.get("pvVolt")),
+                                "pvInputCurrent": _safe_float(snapshot.get("pvInCurr")),
+                                "pvPower": _safe_float(snapshot.get("pvPower")),
+                                "pvTotalPower": _safe_float(snapshot.get("pvTotalPower")),
+                                "batteryVoltage": _safe_float(snapshot.get("emsVoltage")),
+                                "batteryCurrent": _safe_float(snapshot.get("emsCurrent")),
+                                "batteryPower": _safe_float(snapshot.get("emsPower")),
+                                "batterySoc": _safe_int(snapshot.get("emsSoc")),
+                                "tempMax": _safe_float(snapshot.get("tempMax")),
+                                "devTempMax": _safe_float(snapshot.get("devTempMax")),
+                                "energyPvToday": _safe_float(snapshot.get("ePvToday")),
+                                "energyPvTotal": _safe_float(snapshot.get("ePvTotal")),
+                                "energyLoadToday": _safe_float(snapshot.get("eLoadToday")),
+                                "energyLoadTotal": _safe_float(snapshot.get("eLoadTotal")),
+                                "totalEnergy": _safe_float(snapshot.get("totalEnergy")),
                             }
                         }
                     elif device_type == DeviceTypeEnum.LITHIUM_BATTERY_PACK:
@@ -74,11 +90,11 @@ class FelicitySolarCoordinator(DataUpdateCoordinator):
                             "type": device_type,
                             "serialNumber": device_sn,
                             "data": {
-                                "voltage": float(snapshot.get("battVolt", 0)),
-                                "current": float(snapshot.get("battCurr", 0)),
-                                "soc": int(snapshot.get("battSoc", 0)),
-                                "soh": int(snapshot.get("battSoh", 0)),
-                                "ratedEnergy": float(snapshot.get("ratedEnergy", 0)),
+                                "voltage": _safe_float(snapshot.get("battVolt")),
+                                "current": _safe_float(snapshot.get("battCurr")),
+                                "soc": _safe_int(snapshot.get("battSoc")),
+                                "soh": _safe_int(snapshot.get("battSoh")),
+                                "ratedEnergy": _safe_float(snapshot.get("ratedEnergy")),
                                 "energyUnit": str(snapshot.get("energyUnit", "")),
                                 "nameplateRatedPower": str(snapshot.get("nameplateRatedPower", "")),
                             }
