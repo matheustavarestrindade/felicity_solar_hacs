@@ -95,6 +95,13 @@ class FelicitySolarCoordinator(DataUpdateCoordinator):
                             }
                         }
                     elif device_type == DeviceTypeEnum.LITHIUM_BATTERY_PACK:
+                        charging_state_raw = snapshot.get("bmsChargingState")
+                        if charging_state_raw == 1:
+                            charging_state = "Charging"
+                        elif charging_state_raw == 0:
+                            charging_state = "Idle"
+                        else:
+                            charging_state = "Unknown"
                         devices_data[device_sn] = {
                             "type": device_type,
                             "serialNumber": device_sn,
@@ -103,9 +110,22 @@ class FelicitySolarCoordinator(DataUpdateCoordinator):
                                 "current": _safe_float(snapshot.get("battCurr")),
                                 "soc": _safe_int(snapshot.get("battSoc")),
                                 "soh": _safe_int(snapshot.get("battSoh")),
-                                "ratedEnergy": _safe_float(snapshot.get("ratedEnergy")),
-                                "energyUnit": str(snapshot.get("energyUnit", "")),
-                                "nameplateRatedPower": str(snapshot.get("nameplateRatedPower", "")),
+                                "power": _safe_float(snapshot.get("bmsPower")),
+                                "chargingState": charging_state,
+                                "tempMax": _safe_float(snapshot.get("tempMax")),
+                                "tempMin": _safe_float(snapshot.get("tempMin")),
+                                "remainingEnergy": _safe_float(snapshot.get("remainingBatteryEnergy1")),
+                                "capacity": _safe_float(snapshot.get("battCapacity")),
+                                "maxCellVoltage": _safe_float(snapshot.get("maxVoltage2bms")),
+                                "minCellVoltage": _safe_float(snapshot.get("minVoltage2bms")),
+                                "emsSocAvg": _safe_int(snapshot.get("emsSocAvg")),
+                                "wifiSignal": _safe_int(snapshot.get("wifiSignal")),
+                                "cellTemp1": _safe_float(snapshot.get("cellTemp1")),
+                                "cellTemp2": _safe_float(snapshot.get("cellTemp2")),
+                                "cellTemp3": _safe_float(snapshot.get("cellTemp3")),
+                                "cellTemp4": _safe_float(snapshot.get("cellTemp4")),
+                                "chargeLimitVoltage": _safe_float(snapshot.get("BMSLCVolt")),
+                                "dischargeLimitVoltage": _safe_float(snapshot.get("BMSLDVolt")),
                             }
                         }
                     else:
