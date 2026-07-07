@@ -7,11 +7,9 @@ from homeassistant.components.sensor import (
 from homeassistant.const import (
     UnitOfElectricPotential,
     UnitOfElectricCurrent,
-    UnitOfElectricCharge,
     UnitOfPower,
     UnitOfEnergy,
     UnitOfTemperature,
-    UnitOfSignalStrength,
     PERCENTAGE,
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -69,7 +67,7 @@ BATTERY_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     ),
     SensorEntityDescription(
         key="capacity", name="Capacity",
-        native_unit_of_measurement=UnitOfElectricCharge.AMPERE_HOUR,
+        native_unit_of_measurement="Ah",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
@@ -92,7 +90,7 @@ BATTERY_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     ),
     SensorEntityDescription(
         key="wifiSignal", name="WiFi Signal",
-        native_unit_of_measurement=UnitOfSignalStrength.DECIBELS_MILLIWATT,
+        native_unit_of_measurement="dBm",
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
         state_class=SensorStateClass.MEASUREMENT,
     ),
