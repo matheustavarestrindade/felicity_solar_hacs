@@ -5,6 +5,7 @@ from .const import DOMAIN
 from .api import DeviceTypeEnum
 from .sensors_inverter import create_inverter_sensors
 from .sensors_battery import create_battery_sensors
+from .sensors_controller import create_controller_sensors
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +34,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                 entities.extend(sensor_list)
                 _LOGGER.info(
                     "Created %d battery sensor(s) for %s",
+                    len(sensor_list), device_sn
+                )
+
+            elif device_type == DeviceTypeEnum.CONTROLLER:
+                sensor_list = create_controller_sensors(coordinator, device_sn)
+                entities.extend(sensor_list)
+                _LOGGER.info(
+                    "Created %d controller sensor(s) for %s",
                     len(sensor_list), device_sn
                 )
     else:

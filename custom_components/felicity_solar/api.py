@@ -31,6 +31,7 @@ def create_felicity_client_session(hass=None) -> aiohttp.ClientSession:
 class DeviceTypeEnum(str, Enum):
     LITHIUM_BATTERY_PACK = "LITHIUM_BATTERY_PACK"
     HIGH_FREQUENCY_INVERTER = "HIGH_FREQUENCY_INVERTER"
+    CONTROLLER = "CONTROLLER"
 
 
 class FelicitySolarAPI:

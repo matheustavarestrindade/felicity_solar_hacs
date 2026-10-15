@@ -108,6 +108,26 @@ class FelicitySolarCoordinator(DataUpdateCoordinator):
                                 "nameplateRatedPower": str(snapshot.get("nameplateRatedPower", "")),
                             }
                         }
+                    elif device_type == DeviceTypeEnum.CONTROLLER:
+                        devices_data[device_sn] = {
+                            "type": device_type,
+                            "serialNumber": device_sn,
+                            "data": {
+                                "pvVoltage": _safe_float(snapshot.get("pvVolt")),
+                                "pvCurrent": _safe_float(snapshot.get("pvInCurr")),
+                                "pvPower": _safe_float(snapshot.get("pvPower")),
+                                "pvTotalPower": _safe_float(snapshot.get("pvTotalPower")),
+                                "batteryVoltage": _safe_float(snapshot.get("emsVoltage")),
+                                "batteryCurrent": _safe_float(snapshot.get("emsCurrent")),
+                                "chargingPower": _safe_float(snapshot.get("emsPower")),
+                                "chargingState": _safe_int(snapshot.get("bmsChargingState")),
+                                "controllerTemp": _safe_float(snapshot.get("tempMax")),
+                                "deviceTemp": _safe_float(snapshot.get("devTempMax")),
+                                "totalEnergy": _safe_float(snapshot.get("totalEnergy")),
+                                "workMode": str(snapshot.get("workModeStr", "")),
+                                "status": str(snapshot.get("status", "")),
+                            }
+                        }
                     else:
                         _LOGGER.warning(
                             "Unknown device type '%s' for %s, skipping",
